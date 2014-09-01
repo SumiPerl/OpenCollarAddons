@@ -155,6 +155,21 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
     return TRUE;
 }
 
+string WearFolder (string sStr) { //function grabs g_sCurrentPath, and splits out the final directory path, attaching .alwaysadd directories and passes RLV commands
+    string sOutput;
+    string sPrePath;
+    list lTempSplit = llParseString2List(sStr,["/"],[]);
+    lTempSplit = llList2List(lTempSplit,0,llGetListLength(lTempSplit) -2);
+    sPrePath = llDumpList2String(lTempSplit,"/");
+    if (g_sPathPrefix + "/" == sPrePath) { //
+        sOutput = "@remoutfit=force,detach=force,attachallover:"+g_sCurrentPath+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force";
+    }
+    else {
+        sOutput = "@remoutfit=force,detach=force,attachallover:"+g_sCurrentPath+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force,attachallover:"+sPrePath+"/.alwaysadd/=force";
+    }
+   // llOwnerSay("rlv:"+sOutput);
+    return sOutput;
+}
 
 
 default {
@@ -183,9 +198,7 @@ default {
             if (sMsg == "") {
                 Notify(kID,"That outfit cannot be found in #RLV/"+g_sPathPrefix,FALSE);
             } else { // we got a match
-                llOwnerSay("@remoutfit=force");
-                llOwnerSay("@detach=force");
-                llOwnerSay("@attachallover:"+sMsg+"=force,@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
+                llOwnerSay(WearFolder(sMsg));
                 //llOwnerSay("@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
                 Notify(kID,"Loading outfit #RLV/"+sMsg,FALSE);
             }
@@ -247,18 +260,15 @@ default {
                       llMessageLinked(LINK_THIS, iAuth, "menu "+SUBMENU_BUTTON, kAv);
                   }
                   else if (sMessage == BACKMENU) {
-                    g_sCurrentPath += sMessage + "/";
                     list lTempSplit = llParseString2List(g_sCurrentPath,["/"],[]);
-                    lTempSplit = llList2List(lTempSplit,0,llGetListLength(lTempSplit) -3);
+                    lTempSplit = llList2List(lTempSplit,0,llGetListLength(lTempSplit) -2);
                     g_sCurrentPath = llDumpList2String(lTempSplit,"/") + "/";
                     llSetTimerEvent(g_iTimeOut);
                     g_iListener = llListen(g_iFolderRLV, "", llGetOwner(), "");
                     llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);
                   }
                   else if (sMessage == "WEAR") {
-                    llOwnerSay("@remoutfit=force");
-                    llOwnerSay("@detach=force");
-                    llOwnerSay("@attachallover:"+g_sCurrentPath+"=force,@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
+                    llOwnerSay(WearFolder(g_sCurrentPath));
                     //llOwnerSay("@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
                   }
                   else if (sMessage != "") {

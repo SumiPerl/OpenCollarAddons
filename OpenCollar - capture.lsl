@@ -220,9 +220,9 @@ default {
         }
         else if (iNum == COMMAND_SAFEWORD) { 
             // Safeword has been received, release any restricitions that should be released
-            Notify(kID,"Capture game is OFF!",TRUE);
+            Notify(kID,"Capture game is OFF!",FALSE);
             g_iCaptureOn=FALSE;
-            Notify(kID,"Temp owners list has been purged.",TRUE);
+            Notify(kID,"Temp owners list has been purged.",FALSE);
             g_lTempOwners=[];
             llMessageLinked(LINK_SET, LM_SETTING_EMPTY, "auth_tempowner", "");
         }
@@ -286,9 +286,9 @@ default {
                }
                 else if (sMessage == "Reset") {
                     UserCommand(iAuth,"capture reset",kAv,TRUE);
-                }
+               }
                 
-        }
-    }
-}
+            }
+       }
+   }
 }

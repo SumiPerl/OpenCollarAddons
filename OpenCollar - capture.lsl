@@ -1,17 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////
-// ------------------------------------------------------------------------------ //
-//                            OpenCollar - capture                                //
-//                  version 3.980 (Collar version 3.80 or greater)                //
-// ------------------------------------------------------------------------------ //
-// Licensed under the GPLv2 with additional requirements specific to Second Life® //
-// and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
-// ------------------------------------------------------------------------------ //
-// ©   2008 - 2014  Individual Contributors and OpenCollar - submission set free™ //
-// ------------------------------------------------------------------------------ //
-//                    github.com/OpenCollar/OpenCollarUpdater                     //
-// ------------------------------------------------------------------------------ // 
-//////////////////////////////////////////////////////////////////////////////////// 
-
+//tempowner demo app
 
 string  SUBMENU_BUTTON              = "Capture"; // Name of the submenu
 string  COLLAR_PARENT_MENU          = "Apps"; // name of the menu, where the menu plugs in, should be usually Addons. Please do not use the mainmenu anymore
@@ -180,11 +167,11 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
     } else if (sStr == "capture on")  {
         Notify(kID,"Capture game is ON!",TRUE);
         g_iCaptureOn=TRUE;
-        llMessageLinked(LINK_SET, LM_SETTING_SAVE, "capture=1", "");
+        llMessageLinked(LINK_SET, LM_SETTING_SAVE,g_sScript+ "capture=1", "");
     } else if (sStr == "capture off")  {
         Notify(kID,"Capture game is OFF!",TRUE);
         g_iCaptureOn=FALSE;
-        llMessageLinked(LINK_SET, LM_SETTING_DELETE, "capture", "");
+        llMessageLinked(LINK_SET, LM_SETTING_DELETE,g_sScript+ "capture", "");
     } 
     if (remenu) {
         DoMenu(kID, iNum);
@@ -223,7 +210,7 @@ default {
             string sValue = llList2String(lParams, 1);
             
             // and check if any values for use are received
-            if (sToken == "capture") {
+            if (sToken == g_sScript+"capture") {
                 if (sValue == (string)1) { g_iCaptureOn = TRUE; }
             }
             if (sToken == "auth_tempowner") {

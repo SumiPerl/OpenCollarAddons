@@ -162,10 +162,10 @@ string WearFolder (string sStr) { //function grabs g_sCurrentPath, and splits ou
     lTempSplit = llList2List(lTempSplit,0,llGetListLength(lTempSplit) -2);
     sPrePath = llDumpList2String(lTempSplit,"/");
     if (g_sPathPrefix + "/" == sPrePath) { //
-        sOutput = "@remoutfit=force,detach=force,attachallover:"+g_sCurrentPath+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force";
+        sOutput = "@remoutfit=force,detach=force,attachallover:"+sStr+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force";
     }
     else {
-        sOutput = "@remoutfit=force,detach=force,attachallover:"+g_sCurrentPath+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force,attachallover:"+sPrePath+"/.alwaysadd/=force";
+        sOutput = "@remoutfit=force,detach=force,attachallover:"+sStr+"=force,attachallover:"+g_sPathPrefix+"/.alwaysadd/=force,attachallover:"+sPrePath+"/.alwaysadd/=force";
     }
    // llOwnerSay("rlv:"+sOutput);
     return sOutput;
@@ -199,6 +199,7 @@ default {
                 Notify(kID,"That outfit cannot be found in #RLV/"+g_sPathPrefix,FALSE);
             } else { // we got a match
                 llOwnerSay(WearFolder(sMsg));
+                g_sCurrentPath = sMsg;
                 //llOwnerSay("@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
                 Notify(kID,"Loading outfit #RLV/"+sMsg,FALSE);
             }

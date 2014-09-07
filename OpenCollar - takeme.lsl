@@ -1,4 +1,17 @@
-//tempowner demo app
+////////////////////////////////////////////////////////////////////////////////////
+// ------------------------------------------------------------------------------ //
+//                             OpenCollar - takeme                                //
+//                                 version 3.980                                  //
+// ------------------------------------------------------------------------------ //
+// Licensed under the GPLv2 with additional requirements specific to Second Life® //
+// and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
+// ------------------------------------------------------------------------------ //
+// ©   2008 - 2014  Individual Contributors and OpenCollar - submission set free™ //
+// ------------------------------------------------------------------------------ //
+//                    github.com/OpenCollar/OpenCollarUpdater                     //
+// ------------------------------------------------------------------------------ //
+////////////////////////////////////////////////////////////////////////////////////
+
 
 string  SUBMENU_BUTTON              = "TakeMe"; // Name of the submenu
 string  COLLAR_PARENT_MENU          = "Apps"; // name of the menu, where the menu plugs in, should be usually Addons. Please do not use the mainmenu anymore
@@ -147,7 +160,7 @@ DoMenu(key keyID, integer iAuth) {
         lMyButtons += UNTICKED+"ForceTake";
     }
     if (llGetListLength(g_lRequests) > 0) {
-        sPrompt += "\nThere are "+ (string)llGetListLength(g_lRequests) +" requests for capture...";
+        sPrompt += "\nThere are "+ (string)llGetListLength(g_lRequests) +" requests for capture...\n\n";
     }
     if (llGetListLength(g_lTempOwners) > 0) {
         sPrompt += "\nCurrent Temp Owners: ";
@@ -191,6 +204,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
         Notify(kID,"Temp owners list has been purged.",TRUE);
         g_lTempOwners=[];
         llMessageLinked(LINK_SET, LM_SETTING_DELETE, "auth_tempowner", "");
+        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "auth_tempowner", "");
     } else if (sStr == "takeme on")  {
         Notify(kID,"takeme game is ON!",TRUE);
         g_iCaptureOn=TRUE;
@@ -303,11 +317,8 @@ default {
         }
         else if (iNum == COMMAND_SAFEWORD) { 
             // Safeword has been received, release any restricitions that should be released
-            Notify(kID,"TakeMe game is OFF!",FALSE);
-            g_iCaptureOn=FALSE;
-            Notify(kID,"Temp owners list has been purged.",FALSE);
-            g_lTempOwners=[];
-            llMessageLinked(LINK_SET, LM_SETTING_EMPTY, "auth_tempowner", "");
+            UserCommand(COMMAND_OWNER,"takeme reset",g_kWearer,FALSE);
+            UserCommand(COMMAND_OWNER,"takeme off",g_kWearer,FALSE);
         }
         else if (UserCommand(iNum, sStr, kID, FALSE)) {
                     // do nothing more if TRUE
@@ -324,7 +335,7 @@ default {
                         g_lRequests += llList2List(lSplit,2,2);
                         g_lRequests_Names += llList2List(lSplit,1,1);
                         if (g_iTakeMeForce) {
-                            DoMenuAlt(kID,COMMAND_WEARER);
+                            DoMenuAlt(kID,COMMAND_EVERYONE);
                         }
                         else {
                             DoMenu(g_kWearer,COMMAND_WEARER);

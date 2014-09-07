@@ -5,16 +5,87 @@ string  COLLAR_PARENT_MENU          = "Apps"; // name of the menu, where the men
 
 key     g_kMenuID;                              // menu handler
 key     g_kFolderMenuID;                        // folder menu
-key     g_kWearer;       
+key     g_kRemAttachedMenuID;                   // attachment remove menu
+key     g_kMultipleMatchMenuID;
+key     g_kWearer;
+key     g_kMenuClicker;
+
 integer g_iListener;                       // key of the current wearer to reset only on owner changes
 string  g_sScript="Outfits_";                              // part of script name used for settings
 string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item        
 integer g_iFolderRLV = 98745923;
-integer g_iFolderRLVSearch = 98745924;
+integer g_iRemAttachedRLV = 98745924;
+integer g_iFolderRLVSearch = 98745925;
 integer g_iTimeOut = 30; //timeout on viewer response commands
+integer g_iRlvOn = FALSE;
+integer g_iRlvaOn = FALSE;
 string g_sCurrentPath;
 string g_sPathPrefix = "outfits"; //we look for outfits in here
-key g_kMenuClicker;
+
+list CLOTH_POINTS = [
+    "Gloves",
+    "Jacket",
+    "Pants",
+    "Shirt",
+    "Shoes",
+    "Skirt",
+    "Socks",
+    "Underpants",
+    "Undershirt",
+    "Skin",
+    "Eyes",
+    "Hair",
+    "Shape",
+    "Alpha",
+    "Tattoo",
+    "Physics"
+        ];
+
+
+list ATTACH_POINTS = [//these are ordered so that their indices in the list correspond to the numbers returned by llGetAttached
+    "Chest",
+    "Skull",
+    "Left Shoulder",
+    "Right Shoulder",
+    "Left Hand",
+    "Right Hand",
+    "Left Foot",
+    "Right Foot",
+    "Spine",
+    "Pelvis",
+    "Mouth",
+    "Chin",
+    "Left Ear",
+    "Right Ear",
+    "Left Eyeball",
+    "Right Eyeball",
+    "Nose",
+    "R Upper Arm",
+    "R Forearm",
+    "L Upper Arm",
+    "L Forearm",
+    "Right Hip",
+    "R Upper Leg",
+    "R Lower Leg",
+    "Left Hip",
+    "L Upper Leg",
+    "L Lower Leg",
+    "Stomach",
+    "Left Pec",
+    "Right Pec",
+    "Center 2",
+    "Top Right",
+    "Top",
+    "Top Left",
+    "Center",
+    "Bottom Left",
+    "Bottom",
+    "Bottom Right",
+    "Neck",
+    "Avatar Center"
+        ];
+
+
 // OpenCollar MESSAGE MAP
 
 // messages for authenticating users
@@ -55,7 +126,7 @@ integer RLV_OFF                    = 6100; // send to inform plugins that RLV is
 integer RLV_ON                     = 6101; // send to inform plugins that RLV is enabled now, no message or key needed
 integer RLV_QUERY                  = 6102; //query from a script asking if RLV is currently functioning
 integer RLV_RESPONSE               = 6103; //reply to RLV_QUERY, with "ON" or "OFF" as the message
-
+integer RLVA_VERSION               = 6004;
 
 // messages to the dialog helper
 integer DIALOG                     = -9000;
@@ -108,11 +179,15 @@ key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integ
 }
 
 DoMenu(key keyID, integer iAuth) {
-    string sPrompt = "\nOutfits ";
     list lMyButtons;
-    lMyButtons += ["Browse"];
-    
-    // and dispay the menu
+    string sPrompt = "\nOutfits ";
+    if (!g_iRlvOn) {
+        sPrompt += "\nYou need to enable RLV to use this plugin";
+    }
+    else {
+        
+        lMyButtons += ["Browse","RemAttached"];
+    }
     g_kMenuID = Dialog(keyID, sPrompt, lMyButtons, [UPMENU], 0, iAuth);
 }
 
@@ -134,6 +209,16 @@ FolderMenu(key keyID, integer iAuth,string sFolders) {
     }
 }
 
+RemAttached(key keyID, integer iAuth,string sFolders) {
+    string sPrompt = "\nOutfits ";
+    sPrompt = "\n\nRemove Attachment by Name";
+    list lMyButtons;
+
+    lMyButtons += llParseString2List(sFolders,[","],[""]);
+    // and dispay the menu
+    g_kRemAttachedMenuID = Dialog(keyID, sPrompt, lMyButtons, [UPMENU], 0, iAuth);
+}
+
 integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
     sStr=llToLower(sStr);
     if (!(iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER)) {
@@ -146,7 +231,15 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
         if (sStr) { //we have a folder to try find...
             llSetTimerEvent(g_iTimeOut);
             g_iListener = llListen(g_iFolderRLVSearch, "", llGetOwner(), "");
-            llOwnerSay("@findfolder:"+sStr+"="+(string)g_iFolderRLVSearch);
+            g_kMenuClicker = kID;
+            if (g_iRlvaOn) {
+                llOwnerSay("RLVa on..");
+                llOwnerSay("@findfolders:"+sStr+"="+(string)g_iFolderRLVSearch);
+            }
+            else {
+                llOwnerSay("RLV on...");
+                llOwnerSay("@findfolder:"+sStr+"="+(string)g_iFolderRLVSearch);
+            }
         }
     }
     if (remenu) {
@@ -188,7 +281,7 @@ default {
         if (llGetOwner()!=g_kWearer)  llResetScript();
     }
     listen(integer iChan, string sName, key kID, string sMsg) {
-        llListenRemove(g_iListener);
+        //llListenRemove(g_iListener);
         llSetTimerEvent(0.0);
         //llOwnerSay((string)iChan+"|"+sName+"|"+(string)kID+"|"+sMsg);
         if (iChan == g_iFolderRLV) { //We got some folders to process
@@ -198,10 +291,25 @@ default {
             if (sMsg == "") {
                 Notify(kID,"That outfit cannot be found in #RLV/"+g_sPathPrefix,FALSE);
             } else { // we got a match
-                llOwnerSay(WearFolder(sMsg));
-                g_sCurrentPath = sMsg;
+                if (llSubStringIndex(sMsg,",") < 0) {
+                    llOwnerSay(WearFolder(sMsg));
+                    g_sCurrentPath = sMsg;
+                    //llOwnerSay("@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
+                    Notify(kID,"Loading outfit #RLV/"+sMsg,FALSE);
+                } else {
+                    string sPrompt = "Multiple folders found.  Please select from the following list...";
+                    list lFolderMatches = llParseString2List(sMsg,[","],[]);
+                    g_kMultipleMatchMenuID = Dialog(g_kMenuClicker, sPrompt, lFolderMatches, [UPMENU], 0, COMMAND_OWNER);
+                }
+            }
+        }
+        else if (iChan == g_iRemAttachedRLV) {
+            if (sMsg == "") {
+                //Notify(kID,sName + "I can't find anything to remove...",FALSE);
+            } else { // we got a match
+                llOwnerSay(sMsg);
                 //llOwnerSay("@attachallover:"+g_sPathPrefix+"/.alwaysadd/=force");
-                Notify(kID,"Loading outfit #RLV/"+sMsg,FALSE);
+                //Notify(kID,"Loading outfit #RLV/"+sMsg,FALSE);
             }
         }
     }
@@ -224,6 +332,12 @@ default {
             if (sToken == "Global_CType") CTYPE = sValue;
         }
 */
+        else if (iNum == RLV_ON) {
+            g_iRlvOn = TRUE;
+        }
+        else if (iNum == RLVA_VERSION) { 
+            g_iRlvaOn = TRUE;
+         }
         else if (iNum == COMMAND_SAFEWORD) { 
             // Safeword has been received, release any restricitions that should be released
          }
@@ -253,9 +367,26 @@ default {
                     llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);
                    
                 }
+                else if (sMessage == "RemAttached") {
+                    g_kMenuClicker = kAv; //on our listen response, we need to know who to pop a dialog for
+                    llSetTimerEvent(g_iTimeOut);
+                    g_iListener = llListen(g_iRemAttachedRLV, "", llGetOwner(), "");
+                    integer x = llGetListLength(ATTACH_POINTS)-1;
+                    integer i = 0;
+                    for (i=0;i<=x;++i){
+                        llOwnerSay("@getaddattachnames:"+llList2String(ATTACH_POINTS,i)+"="+(string)g_iRemAttachedRLV);
+                    }
+                    x = llGetListLength(CLOTH_POINTS)-1;
+                    i = 0;
+                    for (i=0;i<=x;++i){
+                        llOwnerSay("@getpathnew:"+llList2String(CLOTH_POINTS,i)+"="+(string)g_iRemAttachedRLV);
+                    }
+                   
+                }
 
             }
-            if (kID == g_kFolderMenuID) {
+            if (kID == g_kFolderMenuID || kID == g_kMultipleMatchMenuID) {
+                  g_kMenuClicker = kAv;
                   if (sMessage == UPMENU) {
                       //give av the parent menu
                       llMessageLinked(LINK_THIS, iAuth, "menu "+SUBMENU_BUTTON, kAv);
@@ -274,6 +405,7 @@ default {
                   }
                   else if (sMessage != "") {
                     g_sCurrentPath += sMessage + "/";
+                    if (kID == g_kMultipleMatchMenuID) g_sCurrentPath = sMessage;
                     llSetTimerEvent(g_iTimeOut);
                     g_iListener = llListen(g_iFolderRLV, "", llGetOwner(), "");
                     llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);

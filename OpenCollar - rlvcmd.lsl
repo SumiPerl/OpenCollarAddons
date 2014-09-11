@@ -500,7 +500,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu)
     string sParam2 = llList2String(lParams, 3); //param 2
     lParams = []; //clean
     string sMainButton = llToLower(SUBMENU_BUTTON);
-    if(!(iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER)) {
+    if(!(iNum >= COMMAND_OWNER && iNum <= COMMAND_OWNER)) {
         return FALSE;
     } else if((g_iRlvOn == FALSE) && (llSubStringIndex(sStr, sMainButton) == 0)) {
         Notify(kID, "RLV is off in " + WEARERNAME + "'s " + CTYPE + ".  Please enable RLV before using this plugin", FALSE);

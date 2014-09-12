@@ -157,7 +157,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
     string sParam2;
     if (llGetListLength(lParams) > 2) sParam2 = llDumpList2String(llList2List(lParams,2,-1)," ");
     sStr=llToLower(sStr);
-    if (!(iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER)) { 
+    if (!(iNum >= COMMAND_OWNER && iNum <= COMMAND_GROUP)) { 
         return FALSE;
     } else if (sStr == g_sAppName || sStr == "menu "+g_sAppName) {
         // an authorized user requested the plugin menu by typing the menus chat command 
